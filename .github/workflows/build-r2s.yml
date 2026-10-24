@@ -80,7 +80,22 @@ jobs:
 
       - name: Compile
         working-directory: openwrt
-        run: make -j"$(nproc)" || make -j1 V=s
+        run: |
+          make -j"$(nproc)" || {
+            echo "=== build failed, tails of the logs that contain errors ==="
+            for f in $(grep -rlE "Error [0-9]+|error:" logs/ 2>/dev/null | head -5); do
+              echo "----- $f"
+              tail -n 80 "$f"
+            done
+            exit 1
+          }
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: openwrt/logs/
 
       - name: Collect images
         run: |
