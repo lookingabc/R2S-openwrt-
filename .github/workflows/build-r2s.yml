@@ -63,7 +63,9 @@ jobs:
         run: |
           ./scripts/feeds update -a
           # remove the official copies so the PassWall feed versions are used
-          rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+          rm -rf feeds/packages/net/{v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+          # use the official xray-core, which matches the official Go toolchain
+          rm -rf feeds/passwall_packages/xray-core
           ./scripts/feeds install -a -f -p passwall_packages
           ./scripts/feeds install -a
 
@@ -77,6 +79,12 @@ jobs:
       - name: Download sources
         working-directory: openwrt
         run: make download -j8
+
+      - name: Build xray-core first (fail fast)
+        working-directory: openwrt
+        run: |
+          make -j"$(nproc)" tools/install toolchain/install
+          make package/feeds/packages/xray-core/compile V=s -j1
 
       - name: Compile
         working-directory: openwrt
